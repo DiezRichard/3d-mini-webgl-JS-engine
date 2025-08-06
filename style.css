@@ -1,0 +1,185 @@
+html, body {touch-action: none;}
+body{
+margin:0;
+padding:0;
+min-width: 95vw;
+min-height: 100vh;
+/*cherry color #E30B5C*/
+background-color: slategrey;
+overflow-y:hidden;
+}
+
+#outerDiv{
+display:grid;
+margin:0;
+padding:0;
+border:0;
+max-width:100%;
+max-height:100%;
+overflow-y:hidden;
+overflow-x: hidden;
+}
+
+#canvasDiv
+{
+  margin: 2%;
+  padding: 1%;
+position: relative;
+background-color: #a6dbbc;
+border:10px solid darkslategrey;
+
+border-radius:5px;
+overflow-y:hidden;
+overflow-x: hidden;
+}
+
+#myCanvas
+{
+position:relative;
+/*.green old school color #a6dbbc */
+background-color: transparent;
+overflow-y:hidden;
+overflow-x: hidden;
+margin:0;
+padding:0;
+border:none;
+image-rendering: pixelated;
+image-rendering: crisp-edges;
+image-rendering: -moz-crisp-edges;
+image-rendering: -webkit-optimize-contrast;
+}
+
+/*--------------------------------------- */
+/*----------------------------------------*/
+
+
+
+/*----------------------------------------*/
+/*----------------------------------------*/
+
+
+/*----------------------------------------*/
+/*----------------------------------------*/
+
+
+
+/* VERTICAL */
+@media (orientation: portrait) 
+{
+
+ #outerDiv{display:grid; top:0; left:0;/*grid-row:2; grid-column:1;*/}
+ 
+ #canvasDiv{
+   position:relative;
+   grid-column:1; 
+   grid-row:1; 
+   width: 80vw; 
+   height:80vw;
+   justify-self: center;
+   align-self: top; 
+   
+ }
+ 
+ #myCanvas
+ {
+ left:0;
+ top:0;
+   width: 100%;
+   height: 100%;
+   margin:0;
+   padding:0;
+   border: none;
+ }
+
+
+}
+
+/*----------------------------------------*/
+/*----------------------------------------*/
+
+/* HORIZONTAL */
+@media (orientation: landscape) {
+
+
+/*#outerDiv{grid-flow:row; grid-row:1; grid-column: 1;}*/
+
+#canvasDiv{
+display: grid;
+max-width: 80vh;
+min-height: 80vh;
+margin: 0%;
+padding: 2%;
+position: fixed;
+top: 0%;
+justify-self: center;
+
+
+}
+
+#myCanvas {
+
+
+width:100%;
+height:100%;
+
+}
+
+
+
+
+
+}
+
+
+/*----------------------------------------*/
+/*----------------------------------------*/
+
+/*Desktop*/
+@media only screen and (min-width:1024px)
+{
+  
+
+#canvasDiv
+{
+min-width:90vh;
+min-height:90vh;
+}
+
+}
+
+/*----------------------------------------*/
+/*----------------------------------------*/
+/*
+#myCanvas {
+  filter: drop-shadow(2px 2px 1px rgba(6, 5, 5, 0.9));
+}
+*/
+#joystick-container {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 120px;
+  touch-action: none;
+}
+
+#joystick-base {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+#joystick-stick {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: transform 0.05s;
+}
