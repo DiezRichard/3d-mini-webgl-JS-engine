@@ -2,6 +2,15 @@ let viewMatrix=null;
 
 let vpMatrix =null;
  
+ let count=0;
+ for(let mesh of meshes)
+ {
+  count+=mesh.length;
+ }
+ console.log(count)
+ 
+ 
+ 
 //~~~~~~~~~~~~~~~~~~~~~~~~~
 
  for(let mesh of meshes){
@@ -10,6 +19,11 @@ let vpMatrix =null;
   
  }//meshes loop
 
+
+for (let mesh of meshes) {
+ uploadMeshToGPU(mesh);
+}
+
 gl.uniformMatrix4fv(
  projectionUniformLocation,
  false,
@@ -17,7 +31,7 @@ gl.uniformMatrix4fv(
 );
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~
-
+let rotAngle=0;
 function main() {
 
 
@@ -35,19 +49,16 @@ lastFrameTime = currentTime;
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-let skipNames = [
-...animate(sword1Animation)
-]
+//let skipNames = [...animate(sword1Animation)]
  
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~
 
-//rotateMesh(tree, { x: 0, y: 1, z: 0 }, -0.005);
+//rotateMesh(body, { x: 0, y: 1, z: 0 }, -0.01);
+//body.rotation.y+=1;
 
-
-rotateAnimation(sword1Animation, { x: 0, y: 1, z: 0 }, 0.01);
+//rotateAnimation(sword1Animation, { x: 0, y: 1, z: 0 }, 0.01);
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -73,28 +84,29 @@ gl.uniformMatrix4fv(
 
 gl.clearColor(0.2, 0.2, 0.5, 0.2);
 
-gl.clear(gl.COLOR_BUFFER_BIT);
+//gl.enable(gl.DEPTH_TEST);
+gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~
+
+rotAngle+=0.02;
+
 //MESHES LOOP{}
 for (let mesh of meshes) {
 
-if(skipNames.includes(mesh)) continue;
+//if(skipNames.includes(mesh)) continue;
 
-if(mesh.isRotating){
- 
- precalcularNormal(mesh)
-}
 
 //~~~~~~~~~~~
 
-let modelMatrix = toWorldView(mesh);
+
+mesh.modelMatrix = toWorldView(mesh);
 
 
 gl.uniformMatrix4fv(
  modelMatrixUniformLocation,
  false,
- new Float32Array(transposeMatrix(modelMatrix))
+ new Float32Array(transposeMatrix(mesh.modelMatrix))
 );
 //~~~~~~~~~~~
 
@@ -131,3 +143,5 @@ function transposeMatrix(m) {
   m[0][3], m[1][3], m[2][3], m[3][3],
  ];
 }
+
+

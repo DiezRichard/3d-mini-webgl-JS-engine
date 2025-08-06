@@ -1,87 +1,75 @@
-/*
-//LOADER 2
-function loadObject2(file){
-let request = new XMLHttpRequest();
-let mesh= [];
-request.open("GET", file, false);
- 
-request.onreadystatechange = function()
-{
 
-if (request.readyState === 4)
-{
-if (request.status === 200 || request.status == 0)
-{
-
-let obj=request.responseText;
-let str=String(obj);
-
- let arr= str.split(/\n/);
- let vectors=[];
- 
- //VECTORS
-for(let i=0;i<arr.length;i++)
-{
-
-//vectors
-if (arr[i].match(/^v\s/))
-{
-//erase
- let p= arr[i].replace("v ","");
- let s=p.replace("v ","");
- //change "," with "."
-s= p.replace(/\,/gm,".");
-//split into 3 coords
-let v= s.split(/\s/);
-//fill in vector coords in numbers
-let c={x:(+v[0]),y:(+v[1]),z:(+v[2])};
-
-c.wx=roundToDecimals(c.wx,1);
-c.wy=roundToDecimals(c.wy,1);
-c.wz=roundToDecimals(c.wz,1);
-//add vectors
-vectors.push(c);
-
-
+function loadObj(file) {
+  let request = new XMLHttpRequest();
+  let mesh = [];
+  
+  request.open("GET", file, false);
+  
+  request.onreadystatechange = function() {
+    if (request.readyState === 4 && (request.status === 200 || request.status === 0)) {
+      let obj = request.responseText;
+      let lines = obj.split(/\r?\n/);
+      let vertices = [];
+      
+      for (let line of lines) {
+        line = line.trim();
+        if (line.startsWith("v ")) {
+          let parts = line.slice(2).replace(/,/g, ".").trim().split(/\s+/);
+          let v = {
+            x: parseFloat(parts[0]),
+            y: parseFloat(parts[1]),
+            z: parseFloat(parts[2]),
+            color: { r: 0.5, g: 0.5, b: 0.5, a: 1.0 }
+          };
+          vertices.push(v);
+        }
+      }
+      
+      for (let line of lines) {
+        line = line.trim();
+        if (line.startsWith("f ")) {
+          let parts = line.slice(2).trim().split(/\s+/);
+          let indices = parts.map(p => parseInt(p.split("/")[0]) - 1);
+          
+          if (indices.length === 3) {
+            let tri = [
+              { ...vertices[indices[0]] },
+              { ...vertices[indices[1]] },
+              { ...vertices[indices[2]] },
+            ];
+            tri.visible = true;
+            tri.color = { r: 0.5, g: 0.5, b: 0.5, a: 1.0 };
+            mesh.push(tri);
+          }
+          
+          if (indices.length === 4) {
+            let tri1 = [
+              { ...vertices[indices[0]] },
+              { ...vertices[indices[1]] },
+              { ...vertices[indices[2]] },
+            ];
+            tri1.visible = true;
+            tri1.color = { r: 0.5, g: 0.5, b: 0.5, a: 1.0 };
+            mesh.push(tri1);
+            
+            let tri2 = [
+              { ...vertices[indices[0]] },
+              { ...vertices[indices[2]] },
+              { ...vertices[indices[3]] },
+            ];
+            tri2.visible = true;
+            tri2.color = { r: 0.5, g: 0.5, b: 0.5, a: 1.0 };
+            mesh.push(tri2);
+          }
+        }
+      }
+    }
+  };
+  
+  request.send(null);
+  return mesh;
 }
 
-}//VECTORS
- 
- //TRIANGLES
- for(let i=0;i<arr.length;i++)
-{
-//triangles
-if(arr[i].match(/^f/))
-{
-//clean
-let clean= arr[i].replace("f ","");
-//split
-let split= clean.split(/\s/);
-
- // take the first value
-let index1= +split[0].match(/\d+/m); 
-let index2= +split[1].match(/\d+/m);
-let index3= +split[2].match(/\d+/m);
-
-let triangle=[];
-
-
-triangle.push(vectors[index1-1],vectors[index2-1],vectors[index3-1]);
-
-triangle.visible=true;
-
-mesh.push(triangle);
-
-}
-}//TRIANGLES
-}
-}
-}
-request.send(null);
-
-return mesh;
-};// LOADER 2
-*/
 //-----------------------//
 
 
@@ -389,6 +377,9 @@ function precalcularNormal(mesh) {
 //-----------------------//
 
 function rotateMesh(mesh, axis, angle) {
+  
+  mesh.isRotating=true;
+  
   // Crear matriz de rotación 4x4
   let cos = Math.cos(angle);
   let sin = Math.sin(angle);
@@ -435,6 +426,25 @@ function rotateMesh(mesh, axis, angle) {
       v.z = rz + center.z;
     }
   }
+}
+
+function computeRotationMatrix(axis, angle) {
+  let x = axis.x, y = axis.y, z = axis.z;
+  let len = Math.hypot(x, y, z);
+  if (len === 0) return mat4.identity();
+
+  x /= len; y /= len; z /= len;
+
+  let s = Math.sin(angle);
+  let c = Math.cos(angle);
+  let t = 1 - c;
+
+  return [
+    [t*x*x + c,     t*x*y - s*z,   t*x*z + s*y,   0],
+    [t*x*y + s*z,   t*y*y + c,     t*y*z - s*x,   0],
+    [t*x*z - s*y,   t*y*z + s*x,   t*z*z + c,     0],
+    [0,             0,             0,             1],
+  ];
 }
 
 //-----------------------//
@@ -521,6 +531,35 @@ function toWorldView(mesh) {
   //return meshByMatrix(mesh, composedMatrix);
 }
 
+
+function toWorldView(mesh) {
+  
+  let axis = { x: 0, y: 1, z: 0 }; // eje Y
+
+  let rotationMatrix = computeRotationMatrix(axis, rotAngle);
+  
+  // Matriz de escala 4x4
+  let scaleMatrix = [
+    [mesh.scale, 0, 0, 0],
+    [0, mesh.scale, 0, 0],
+    [0, 0, mesh.scale, 0],
+    [0, 0, 0, 1],
+  ];
+  
+  // Matriz de traslación 4x4
+  let translationMatrix = [
+    [1, 0, 0, mesh.position.x],
+    [0, 1, 0, mesh.position.y],
+    [0, 0, 1, mesh.position.z],
+    [0, 0, 0, 1],
+  ];
+  
+  // Multiplica matrices en orden: T * R * S
+  let trsMatrix = multiplyMatrices(translationMatrix, rotationMatrix, scaleMatrix);
+  
+  return trsMatrix;
+}
+
 //-----------------------//
 
 function getRotationMatrix(mesh) {
@@ -558,4 +597,5 @@ camera.up = matrixTimesVector({ x: 0, y: 1, z: 0 }, rotationMatrix);
 }
 
 //-----------------------//
+
 

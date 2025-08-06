@@ -1,10 +1,11 @@
+
 let canvas = document.getElementById("myCanvas");
 let canvasDiv = document.getElementById("canvasDiv");
 
 canvas.height = canvasDiv.clientWidth*2;
 canvas.width = canvasDiv.clientWidth*2;
 
-let gl = canvas.getContext("webgl", {antialias:false});
+let gl = canvas.getContext("webgl2", {antialias:true},{depth:true});
 
 
 /*

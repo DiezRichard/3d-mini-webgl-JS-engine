@@ -16,9 +16,11 @@ let colorBuffer;
 let normalBuffer;
 
 function initWebGL() {
+  
 gl.enable(gl.CULL_FACE);
+gl.cullFace(gl.BACK);
 gl.enable(gl.DEPTH_TEST);
-
+gl.depthFunc(gl.LEQUAL); // o gl.LEQUAL, dependiendo
 let vertexShaderSource = `
 attribute vec3 position;
 attribute vec4 color;
@@ -41,6 +43,29 @@ vColor = color;
 gl_Position = projection * viewMatrix * worldPos;
 }
 `;
+/*
+let fragmentShaderSource = 
+`
+precision mediump float;
+
+varying vec4 vColor;
+varying vec3 vNormal;
+
+uniform vec3 lightDir;
+
+void main() {
+  vec3 norm = normalize(vNormal);
+  vec3 light = normalize(lightDir);
+  
+  float diff = max(dot(norm, light), 0.0);
+  
+  // Color con luz difusa simple y sin especular
+  vec3 color = vColor.rgb * (0.2 + 0.8 * diff); // 0.2 ambient fijo
+  
+  gl_FragColor = vec4(color, vColor.a);
+}
+`;
+*/
 
 let fragmentShaderSource = `
 precision mediump float;
@@ -68,7 +93,7 @@ vec3 ambient = ambientColor * vColor.rgb;
 vec3 diffuse = lightColor * diff * vColor.rgb;
 vec3 specular = lightColor * spec;
 
-vec3 result = ambient + diffuse + specular;
+vec3 result = ambient + diffuse+ specular;
 
 gl_FragColor = vec4(result, vColor.a);
 }
@@ -116,42 +141,59 @@ gl.uniform3f(lightColorLocation, 1.0, 1.0, 1.0);
 gl.uniform1f(shininessLocation, 200.0); 
 }
 
+
+function uploadMeshToGPU(mesh) {
+  const vertices = [];
+  const colors = [];
+  const normals = [];
+  
+  for (let tri of mesh) {
+    for (let v of tri) {
+      vertices.push(v.x, v.y, v.z);
+      colors.push(
+        tri.color.r,
+        tri.color.g,
+        tri.color.b,
+        tri.color.a !== undefined ? tri.color.a : 1.0
+      );
+      normals.push(v.normal.x, v.normal.y, v.normal.z);
+    }
+  }
+  
+  mesh.vertexCount = mesh.length * 3;
+  
+  mesh.vertexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+  
+  mesh.colorBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, mesh.colorBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+  
+  mesh.normalBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, mesh.normalBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+}
+
+
 function drawMeshGl(mesh) {
-
-
-const vertices = [];
-const colors = [];
-const normals = [];
-
-for (let tri of mesh) {
-for (let v of tri) {
-vertices.push(v.x, v.y, v.z);
-colors.push(
-tri.color.r,
-tri.color.g,
-tri.color.b,
-tri.color.a !== undefined ? tri.color.a : 1.0
-);
-normals.push(v.normal.x, v.normal.y, v.normal.z);
-}
-}
-
-gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-gl.enableVertexAttribArray(positionAttributeLocation);
-gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
-
-gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-gl.enableVertexAttribArray(colorAttributeLocation);
-gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
-
-gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-gl.enableVertexAttribArray(normalAttributeLocation);
-gl.vertexAttribPointer(normalAttributeLocation, 3, gl.FLOAT, false, 0, 0);
-
-gl.drawArrays(gl.TRIANGLES, 0, mesh.length * 3);
+  // Posiciones
+  gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
+  gl.enableVertexAttribArray(positionAttributeLocation);
+  gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+  
+  // Colores
+  gl.bindBuffer(gl.ARRAY_BUFFER, mesh.colorBuffer);
+  gl.enableVertexAttribArray(colorAttributeLocation);
+  gl.vertexAttribPointer(colorAttributeLocation, 4, gl.FLOAT, false, 0, 0);
+  
+  // Normales
+  gl.bindBuffer(gl.ARRAY_BUFFER, mesh.normalBuffer);
+  gl.enableVertexAttribArray(normalAttributeLocation);
+  gl.vertexAttribPointer(normalAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+  
+  // Dibujar
+  gl.drawArrays(gl.TRIANGLES, 0, mesh.vertexCount);
 }
 
 initWebGL();

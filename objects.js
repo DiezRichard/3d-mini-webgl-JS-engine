@@ -299,12 +299,39 @@ let tree = createMesh({
 });
 */
 
-let sword1Animation = loadAnimationFromFolder(
-  "obj/sword1",
-  "sword1",
-  17,
-  {
-    scale: globalScale,
-    position: { x: 0, y: 0, z: 0 }
+
+
+
+
+
+let body = loadObj("obj/body.obj");
+body.scale = globalScale * 4;
+body.name = "body";
+body.position = { x: 0, y: -2, z: 0 };
+body.rotation = { x: 0, y: 0, z: 0 };
+
+//=meshes.push(body)
+
+function splitMesh(mesh, size, outMesh) {
+  let numPieces = Math.ceil(mesh.length / size);
+  
+  for (let i = 0; i < numPieces; i++) {
+    let start = i * size;
+    let end = Math.min((i + 1) * size, mesh.length);
+    
+    let piece = mesh.slice(start, end);
+    
+    // Copiar propiedades del mesh original
+    piece.scale = mesh.scale;
+    piece.position = { ...mesh.position };
+    piece.rotation = { ...mesh.rotation };
+    piece.name = mesh.name + "_part" + i;
+    
+    outMesh.push(piece);
   }
-);
+}
+
+meshes.push(body)
+
+//splitMesh(body, Math.ceil(body.length/2), meshes);
+
